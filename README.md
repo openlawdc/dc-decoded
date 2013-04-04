@@ -9,3 +9,4 @@ The `Makefile` currently runs through:
 
 1. Downloading the unofficial code to `code.zip`
 2. Unzipping into `docs/`
+3. Converts docs into HTML with `textutil` (available on Macs)
