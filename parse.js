@@ -18,6 +18,7 @@ function makeChunk() {
 
 glob.sync('xml/*.xml').map(function(f) {
     console.warn('loading ', f);
+    var chunks = [];
     var chunk = makeChunk();
     var $ = cheerio.load(fs.readFileSync(f));
     $('p').each(function(i, elem) {

@@ -13,6 +13,13 @@ The `Makefile` currently runs through:
 4. Converts that HTML into parseable XML with `xmlize.py`
 5. Converts that XML into structured JSON with `parse.js`
 
+## Precook
+
+Early versions of the results of this code:
+
+* [XML (zipped)](https://dl.dropbox.com/u/68059/dccode/code.xml.zip)
+* [JSON (zipped)](https://dl.dropbox.com/u/68059/dccode/code.json.zip)
+
 ## Requirements
 
 On a basic OSX install with dev tools, you should already have these:
