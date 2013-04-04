@@ -1,0 +1,24 @@
+{
+  "name": "dc-decoded",
+  "version": "0.0.0",
+  "description": "Tools and middleware to import DC's [Unofficial Code](http://dccouncil.us/UnofficialDCCode) into [The State Decoded](http://www.statedecoded.com/).",
+  "main": "parse.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/openlawdc/dc-decoded.git"
+  },
+  "author": "",
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "gitHead": "dd868398c8cdccfa65c4030165f2ff887f3041fa",
+  "dependencies": {
+    "cheerio": "~0.10.8",
+    "glob": "~3.1.21"
+  }
+}

@@ -1,3 +1,7 @@
+json: xml
+	mkdir -p json
+	node parse.js
+
 xml: html
 	mkdir -p xml
 	python xmlize.py
