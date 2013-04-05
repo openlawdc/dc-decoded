@@ -1,4 +1,6 @@
 var glob = require('glob'),
+    print = require('printf');
+    encode = require('entities').encode,
     fs = require('fs');
 
 function repealed(l) {
@@ -15,19 +17,19 @@ glob.sync('json/*.json').map(function(f) {
         output += '<structure>\n';
         m.structure.forEach(function(s) {
             if (s.tag == 'title') {
-                output += '\t<unit label="title">' + s.catch_text + '</unit>\n';
+                output += print('\t<unit label="title"></unit>\n', s.catch_text);
             }
             if (s.tag == 'chapter') {
-                output += '\t<unit label="chapter">' + s.text + '</unit>\n';
+                output += print('\t<unit identifier="%s" label="chapter">%s</unit>\n', s.identifier, s.text);
             }
             if (s.tag == 'subchapter') {
-                output += '\t<unit label="subchapter">' + s.text + '</unit>\n';
+                output += print('\t<unit identifier="%s" label="subchapter">%s</unit>\n', s.identifier, s.text);
             }
             if (s.tag == 'division') {
-                output += '\t<unit label="division">' + s.text + '</unit>\n';
+                output += print('\t<unit identifier="%s" label="division">%s</unit>\n', s.identifier, s.text);
             }
             if (s.tag == 'part') {
-                output += '\t<unit label="part">' + s.text + '</unit>\n';
+                output += print('\t<unit identifier="%s" label="part">%s</unit>\n', s.identifier, s.text);
             }
         });
 
@@ -36,17 +38,19 @@ glob.sync('json/*.json').map(function(f) {
 
         m.sections.forEach(function(s) {
             if (s.prefix) {
-                output += '<section prefix="' + s.prefix + '">\n';
+                output += print('<section prefix="%s">\n', s.prefix);
             } else {
                 output += '<section>\n';
             }
-            output += s.text;
-            output += '</section>\n';
+            output += encode(s.text);
+            output += '\n</section>\n';
         });
+
+        output += '</text>\n';
 
         if (m.history) {
             output += '<history>\n';
-            output += m.history;
+            output += encode(m.history);
             output += '\n</history>\n';
         }
 
