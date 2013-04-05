@@ -22,6 +22,9 @@ Install:
 
     npm install
 
+This will install [cheerio](https://github.com/MatthewMueller/cheerio) and
+[node-glob](https://github.com/isaacs/node-glob).
+
 Run:
 
     node parse.js

@@ -95,6 +95,10 @@ function end(txt) {
     return !!txt.match(re.end);
 }
 
+function notes(txt) {
+    return !!txt.match(re.notes);
+}
+
 var chunks = [];
 
 function preprocess(o) {
@@ -135,6 +139,22 @@ glob.sync('xml/*.xml').map(function(f) {
         else if (end(l)) {
             chunks.push(preprocess(o));
             o = { structure: [], sections: [{text:''}] };
+        }
+        else if (notes(l)) {
+            o.history = '';
+            // fast-forward through historical notes. this needs to be revised
+            // to catch the restatement of the law's headed and its effective
+            // date
+            for (; i < lines.length; i++) {
+                l = lines[i].trim();
+                if (end(l)) {
+                    chunks.push(preprocess(o));
+                    o = { structure: [], sections: [{text:''}] };
+                    break;
+                } else {
+                    o.history += l + '\n';
+                }
+            }
         }
         else {
             o.sections[o.sections.length-1].text += l + '\n';
