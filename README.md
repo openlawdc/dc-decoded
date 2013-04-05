@@ -13,6 +13,19 @@ The `Makefile` currently runs through:
 4. Converts that HTML into parseable XML with `xmlize.py`
 5. Converts that XML into structured JSON with `parse.js`
 
+## Running parse.js
+
+This is the meat of the code - it attempts to identify and enforce structure.
+This requires [node.js](http://nodejs.org/).
+
+Install:
+
+    npm install
+
+Run:
+
+    node parse.js
+
 ## Precook
 
 Early versions of the results of this code:
