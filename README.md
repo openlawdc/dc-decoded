@@ -44,3 +44,7 @@ On a basic OSX install with dev tools, you should already have these:
 * Python
 * `textutil`
 * node.js
+
+## Notes
+
+* [Strong PCRE for identifying citations](https://github.com/statedecoded/law-identifier/blob/master/Washington-DC.md)
