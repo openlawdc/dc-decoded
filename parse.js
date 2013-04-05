@@ -8,7 +8,7 @@ var glob = require('glob'),
 // Chapter 1. District of Columbia Government Development.
 // Subchapter I. District of Columbia Establishment.
 var re = {
-    heading: /^§ (\d+)\-(\d+)\.(\d+)?/,
+    heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))(.*)$/,
     title: /^Title (\d+)/,
     division: /^Division ([^\.]+)\.(.*)$/,
     chapter: /^Chapter ([^\.]+)\.(.*)$/,
@@ -20,6 +20,17 @@ var re = {
     credits: /CREDIT\(S\)/,
     formerly: /Formerly cited as (.*)$/
 };
+
+function heading(txt) {
+    if (!txt.match(re.heading)) return false;
+    var match = txt.match(re.heading);
+    return {
+        tag: 'heading',
+        title: match[3],
+        chapter: match[10],
+        catch_text: match[12]
+    };
+}
 
 function subchapter(txt) {
     if (!txt.match(re.subchapter)) return false;
@@ -86,11 +97,23 @@ function end(txt) {
 
 var chunks = [];
 
+function preprocess(o) {
+    var heading = o.structure.filter(function(s) {
+        return s.tag == 'heading';
+    });
+    if (heading.length && heading[0].catch_text.match(/\[Repealed\]/)) {
+        o.structure.push({
+            repealed: true
+        });
+    }
+    return o;
+}
+
 glob.sync('xml/*.xml').map(function(f) {
     console.warn('loading ', f);
 
     var chunks = [],
-        o = { structure: [], text: '' },
+        o = { structure: [], sections: [{text:''}] },
         $ = cheerio.load(fs.readFileSync(f));
 
     var lines = [];
@@ -99,28 +122,28 @@ glob.sync('xml/*.xml').map(function(f) {
     });
 
     for (var i = 0; i < lines.length; i++) {
-        var l = lines[i];
+        var l = lines[i].trim();
         var e;
 
-        if (e = formerly(l)) o.structure.push(e);
-
-        if (e = division(l)) o.structure.push(e);
-
-        if (e = chapter(l)) o.structure.push(e);
-        if (e = subchapter(l)) o.structure.push(e);
-
-        if (e = part(l)) o.structure.push(e);
-        if (e = subpart(l)) o.structure.push(e);
-
-        if (end(l)) {
-            chunks.push(o);
-            o = { structure: [], text: '' };
+        if      (e = formerly(l)) o.structure.push(e);
+        else if (e = heading(l)) o.structure.push(e);
+        else if (e = division(l)) o.structure.push(e);
+        else if (e = chapter(l)) o.structure.push(e);
+        else if (e = subchapter(l)) o.structure.push(e);
+        else if (e = part(l)) o.structure.push(e);
+        else if (e = subpart(l)) o.structure.push(e);
+        else if (end(l)) {
+            chunks.push(preprocess(o));
+            o = { structure: [], sections: [{text:''}] };
+        }
+        else {
+            o.sections[o.sections.length-1].text += l + '\n';
         }
     }
 
     //
-    console.log(JSON.stringify(chunks, null, 4));
-    throw 'foo';
+    // console.log(JSON.stringify(chunks, null, 4));
+    // throw 'foo';
     //
 
     fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(chunks, null, 4));
