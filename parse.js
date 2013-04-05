@@ -8,7 +8,7 @@ var glob = require('glob'),
 // Chapter 1. District of Columbia Government Development.
 // Subchapter I. District of Columbia Establishment.
 var re = {
-    heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))(.*)$/,
+    heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
     title: /^Title (\d+)/,
     division: /^Division ([^\.]+)\.(.*)$/,
     chapter: /^Chapter ([^\.]+)\.(.*)$/,
@@ -16,10 +16,23 @@ var re = {
     part: /Part ([^\.]+)\.(.*)$/,
     subpart: /^Subpart ([^\.]+)\.(.*)$/,
     end: /^END OF DOCUMENT$/,
+    section: /^\(([0-9a-zA-Z])+\)(.*)/,
     notes: /HISTORICAL AND STATUTORY NOTES/,
     credits: /CREDIT\(S\)/,
     formerly: /Formerly cited as (.*)$/
 };
+
+// sections tend to go
+//
+// a
+// b
+//   1
+//     A
+//   2
+//     A
+//     B
+//
+// And so on
 
 function heading(txt) {
     if (!txt.match(re.heading)) return false;
@@ -28,7 +41,16 @@ function heading(txt) {
         tag: 'heading',
         title: match[3],
         chapter: match[10],
-        catch_text: match[12]
+        catch_text: match[12].trim()
+    };
+}
+
+function section(txt) {
+    if (!txt.match(re.section)) return false;
+    var match = txt.match(re.section);
+    return {
+        prefix: match[1],
+        text: match[2]
     };
 }
 
@@ -139,6 +161,9 @@ glob.sync('xml/*.xml').map(function(f) {
         else if (end(l)) {
             chunks.push(preprocess(o));
             o = { structure: [], sections: [{text:''}] };
+        }
+        else if (section(l)) {
+            o.sections.push(section(l));
         }
         else if (notes(l)) {
             o.history = '';
