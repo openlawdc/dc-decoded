@@ -1,7 +1,6 @@
 var glob = require('glob'),
     _ = require('lodash'),
-    fs = require('fs'),
-    cheerio = require('cheerio');
+    fs = require('fs');
 
 // District of Columbia Official Code 2001 Edition Currentness
 // Division I. Government of District.
@@ -19,7 +18,7 @@ var re = {
     part: /Part ([^\.]+)\.(.*)$/,
     subpart: /^Subpart ([^\.]+)\.(.*)$/,
     heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
-    section: /^\(([0-9a-zA-Z])+\)(.*)/,
+    section: /^\(([0-9a-zA-Z\-])+\)(.*)/,
     historical: /HISTORICAL AND STATUTORY NOTES/,
     credits: /CREDIT\(S\)/,
     formerly: /Formerly cited as (.*)$/,
@@ -45,7 +44,10 @@ function heading(txt) {
     return {
         tag: 'heading',
         title: match[3],
-        chapter: match[10],
+        chaptersection: match[5],
+        // ugly hack because right now the regex does not return the
+        // 'full match text'
+        identifier: txt.replace(match[12], ''),
         catch_text: match[12].trim()
     };
 }
@@ -143,17 +145,12 @@ function template() {
     };
 }
 
-glob.sync('xml/*.xml').map(function(f) {
+glob.sync('txt/*.txt').map(function(f) {
     console.warn('loading ', f);
 
     var laws = [],
         law = template(),
-        $ = cheerio.load(fs.readFileSync(f));
-
-    var lines = [];
-    $('p').each(function(i, elem) {
-        lines.push($(this).text());
-    });
+        lines = fs.readFileSync(f, 'utf8').split(/\n/);
 
     for (var i = 0; i < lines.length;) {
         var l = lines[i].trim();
@@ -209,8 +206,9 @@ glob.sync('xml/*.xml').map(function(f) {
 
         // we're done with this law
         if (end(l)) {
-            // console.log(law);
-            // throw 'e';
+            law.historical = law.historical.trim();
+            law.credits = law.credits.trim();
+            law.text = law.credits.trim();
             laws.push(law);
             law = template();
         }
@@ -218,5 +216,5 @@ glob.sync('xml/*.xml').map(function(f) {
         i++;
     }
 
-    fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(laws, null, 4));
+    fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(laws, null, 2));
 });
