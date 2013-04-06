@@ -1,4 +1,5 @@
 var glob = require('glob'),
+    _ = require('lodash'),
     fs = require('fs'),
     cheerio = require('cheerio');
 
@@ -10,18 +11,19 @@ var glob = require('glob'),
 //
 // § 1-101. Territorial area.
 var re = {
-    heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
+    start: /District of Columbia Official Code 2001 Edition Currentness/,
     title: /^Title (\d+)/,
     division: /^Division ([^\.]+)\.(.*)$/,
     chapter: /^Chapter ([^\.]+)\.(.*)$/,
     subchapter: /^Subchapter ([^\.]+)\.(.*)$/,
     part: /Part ([^\.]+)\.(.*)$/,
     subpart: /^Subpart ([^\.]+)\.(.*)$/,
-    end: /^END OF DOCUMENT$/,
+    heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
     section: /^\(([0-9a-zA-Z])+\)(.*)/,
-    notes: /HISTORICAL AND STATUTORY NOTES/,
+    historical: /HISTORICAL AND STATUTORY NOTES/,
     credits: /CREDIT\(S\)/,
-    formerly: /Formerly cited as (.*)$/
+    formerly: /Formerly cited as (.*)$/,
+    end: /^END OF DOCUMENT$/
 };
 
 // sections tend to go
@@ -56,13 +58,22 @@ function section(txt) {
     };
 }
 
+function title(txt) {
+    if (!txt.match(re.title)) return false;
+    var match = txt.match(re.title);
+    return {
+        identifier: match[1],
+        tag: 'title'
+    };
+}
+
 function subchapter(txt) {
     if (!txt.match(re.subchapter)) return false;
     var match = txt.match(re.subchapter);
     return {
+        tag: 'subchapter',
         identifier: match[1],
-        text: match[2].trim(),
-        tag: 'subchapter'
+        text: match[2].trim()
     };
 }
 
@@ -70,8 +81,7 @@ function formerly(txt) {
     if (!txt.match(re.formerly)) return false;
     var match = txt.match(re.formerly);
     return {
-        as: match[1].trim(),
-        tag: 'formerly'
+        as: match[1].trim()
     };
 }
 
@@ -79,9 +89,9 @@ function chapter(txt) {
     if (!txt.match(re.chapter)) return false;
     var match = txt.match(re.chapter);
     return {
+        tag: 'chapter',
         identifier: match[1],
-        text: match[2].trim(),
-        tag: 'chapter'
+        text: match[2].trim()
     };
 }
 
@@ -89,9 +99,9 @@ function part(txt) {
     if (!txt.match(re.part)) return false;
     var match = txt.match(re.part);
     return {
+        tag: 'part',
         identifier: match[1],
-        text: match[2].trim(),
-        tag: 'part'
+        text: match[2].trim()
     };
 }
 
@@ -99,9 +109,9 @@ function subpart(txt) {
     if (!txt.match(re.subpart)) return false;
     var match = txt.match(re.subpart);
     return {
+        tag: 'subpart',
         identifier: match[1],
-        text: match[2].trim(),
-        tag: 'subpart'
+        text: match[2].trim()
     };
 }
 
@@ -115,33 +125,23 @@ function division(txt) {
     };
 }
 
-function end(txt) {
-    return !!txt.match(re.end);
-}
+function start(txt) { return !!txt.match(re.start); }
+function end(txt) { return !!txt.match(re.end); }
+function historical(txt) { return !!txt.match(re.historical); }
 
-function notes(txt) {
-    return !!txt.match(re.notes);
-}
+var laws = [];
 
-var chunks = [];
-
-function preprocess(o) {
-    var heading = o.structure.filter(function(s) {
-        return s.tag == 'heading';
-    });
-    if (heading.length && heading[0].catch_text.match(/\[Repealed\]/)) {
-        o.structure.push({
-            repealed: true
-        });
-    }
-    return o;
+function template() {
+    return {
+        sections: []
+    };
 }
 
 glob.sync('xml/*.xml').map(function(f) {
     console.warn('loading ', f);
 
-    var chunks = [],
-        o = { structure: [], sections: [{text:''}] },
+    var laws = [],
+        law = { },
         $ = cheerio.load(fs.readFileSync(f));
 
     var lines = [];
@@ -149,49 +149,47 @@ glob.sync('xml/*.xml').map(function(f) {
         lines.push($(this).text());
     });
 
-    for (var i = 0; i < lines.length; i++) {
+    for (var i = 0; i < lines.length;) {
         var l = lines[i].trim();
-        var e;
 
-        if      (e = formerly(l)) o.structure.push(e);
-        else if (e = heading(l)) o.structure.push(e);
-        else if (e = division(l)) o.structure.push(e);
-        else if (e = chapter(l)) o.structure.push(e);
-        else if (e = subchapter(l)) o.structure.push(e);
-        else if (e = part(l)) o.structure.push(e);
-        else if (e = subpart(l)) o.structure.push(e);
-        else if (end(l)) {
-            chunks.push(preprocess(o));
-            o = { structure: [], sections: [{text:''}] };
-        }
-        else if (section(l)) {
-            o.sections.push(section(l));
-        }
-        else if (notes(l)) {
-            o.history = '';
-            // fast-forward through historical notes. this needs to be revised
-            // to catch the restatement of the law's headed and its effective
-            // date
-            for (; i < lines.length; i++) {
-                l = lines[i].trim();
-                if (end(l)) {
-                    chunks.push(preprocess(o));
-                    o = { structure: [], sections: [{text:''}] };
-                    break;
-                } else {
-                    o.history += l + '\n';
-                }
+        // parse a header
+        if (start(l)) {
+            l = lines[++i].trim();
+            while (structure = (heading(l) ||
+                division(l) ||
+                title(l) ||
+                chapter(l) ||
+                subchapter(l) ||
+                part(l) ||
+                subpart(l))) {
+                law[structure.tag] = _.omit(structure, 'tag');
+                l = lines[++i].trim();
+            }
+            while (!(historical(l) || end(l))) {
+                // TODO: sections
+                // if (section(l)) {
+                //     law.sections.push(section(l));
+                // } else {
+                    law.text += l + '\n';
+                // }
+                l = lines[++i].trim();
             }
         }
-        else {
-            o.sections[o.sections.length-1].text += l + '\n';
+
+        // we're done with this law
+        if (end(l)) {
+            // console.log(law);
+            laws.push(law);
+            law = {
+                text: ''
+            };
         }
+
+        i++;
+
+        /*
+        */
     }
 
-    //
-    // console.log(JSON.stringify(chunks, null, 4));
-    // throw 'foo';
-    //
-
-    fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(chunks, null, 4));
+    fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(laws, null, 4));
 });
