@@ -23,7 +23,8 @@ var re = {
     historical: /HISTORICAL AND STATUTORY NOTES/,
     credits: /CREDIT\(S\)/,
     formerly: /Formerly cited as (.*)$/,
-    end: /^END OF DOCUMENT$/
+    end: /^END OF DOCUMENT$/,
+    empty: /^\s*$/
 };
 
 // sections tend to go
@@ -128,11 +129,16 @@ function division(txt) {
 function start(txt) { return !!txt.match(re.start); }
 function end(txt) { return !!txt.match(re.end); }
 function historical(txt) { return !!txt.match(re.historical); }
+function empty(txt) { return !!txt.match(re.empty); }
+function credits(txt) { return !!txt.match(re.credits); }
 
 var laws = [];
 
 function template() {
     return {
+        text: '',
+        historical: '',
+        credits: '',
         sections: []
     };
 }
@@ -141,7 +147,7 @@ glob.sync('xml/*.xml').map(function(f) {
     console.warn('loading ', f);
 
     var laws = [],
-        law = { },
+        law = template(),
         $ = cheerio.load(fs.readFileSync(f));
 
     var lines = [];
@@ -152,43 +158,64 @@ glob.sync('xml/*.xml').map(function(f) {
     for (var i = 0; i < lines.length;) {
         var l = lines[i].trim();
 
-        // parse a header
+        // start a law
         if (start(l)) {
             l = lines[++i].trim();
+
+            // structure
             while (structure = (heading(l) ||
                 division(l) ||
                 title(l) ||
                 chapter(l) ||
                 subchapter(l) ||
                 part(l) ||
+                empty(l) ||
                 subpart(l))) {
-                law[structure.tag] = _.omit(structure, 'tag');
+                if (structure.tag) {
+                    law[structure.tag] = _.omit(structure, 'tag');
+                }
                 l = lines[++i].trim();
             }
-            while (!(historical(l) || end(l))) {
+
+            // text and sections
+            while (!(historical(l) || end(l) || credits(l))) {
                 // TODO: sections
-                // if (section(l)) {
-                //     law.sections.push(section(l));
-                // } else {
+                if (section(l)) {
+                    law.sections.push(section(l));
+                } else {
                     law.text += l + '\n';
-                // }
+                }
                 l = lines[++i].trim();
+            }
+
+            // credits
+            if (credits(l)) {
+                l = lines[++i].trim();
+                while (!(end(l) || historical(l))) {
+                    law.credits += l + '\n';
+                    l = lines[++i].trim();
+                }
+            }
+
+            // historical notes
+            if (historical(l)) {
+                l = lines[++i].trim();
+                while (!end(l)) {
+                    law.historical += l + '\n';
+                    l = lines[++i].trim();
+                }
             }
         }
 
         // we're done with this law
         if (end(l)) {
             // console.log(law);
+            // throw 'e';
             laws.push(law);
-            law = {
-                text: ''
-            };
+            law = template();
         }
 
         i++;
-
-        /*
-        */
     }
 
     fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(laws, null, 4));
