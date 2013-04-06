@@ -154,7 +154,6 @@ glob.sync('txt/*.txt').map(function(f) {
 
     for (var i = 0; i < lines.length;) {
         var l = lines[i].trim();
-
         // start a law
         if (start(l)) {
             l = lines[++i].trim();
@@ -216,5 +215,5 @@ glob.sync('txt/*.txt').map(function(f) {
         i++;
     }
 
-    fs.writeFileSync(f.replace(/xml/g, 'json'), JSON.stringify(laws, null, 2));
+    fs.writeFileSync(f.replace(/txt/g, 'json'), JSON.stringify(laws, null, 2));
 });
