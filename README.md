@@ -27,6 +27,7 @@ This will install [cheerio](https://github.com/MatthewMueller/cheerio) and
 
 Run:
 
+    node text.js
     node parse.js
 
 ## Precook

@@ -20,3 +20,20 @@ How many laws are there? What are our useful markers? These seem like possibilit
     51 files searched
     86455287 bytes searched
     1.616698 seconds
+
+Basic syntax of a law:
+
+    District of Columbia Official Code 2001 Edition Currentness
+    Division
+    (Title
+    Chapter
+    | Subchapter
+    Heading
+    Text
+    | CREDIT(S)
+    | Text
+    | HISTORICAL
+    | Text
+    Current through
+    END OF DOCUMENT
+
