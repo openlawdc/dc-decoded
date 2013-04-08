@@ -11,10 +11,11 @@ var glob = require('glob'),
 // § 1-101. Territorial area.
 var re = {
     start: /District of Columbia Official Code 2001 Edition Currentness/,
-    title: /^Title (\d+)/,
+    title: /^Title (\d+)\.(.*)$/,
     division: /^Division ([^\.]+)\.(.*)$/,
     chapter: /^Chapter ([^\.]+)\.(.*)$/,
     subchapter: /^Subchapter ([^\.]+)\.(.*)$/,
+    subtitle: /^Subtitle ([^\.]+)\.(.*)$/,
     part: /Part ([^\.]+)\.(.*)$/,
     subpart: /^Subpart ([^\.]+)\.(.*)$/,
     heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
@@ -66,7 +67,18 @@ function title(txt) {
     var match = txt.match(re.title);
     return {
         identifier: match[1],
+        text: match[2].trim(),
         tag: 'title'
+    };
+}
+
+function subtitle(txt) {
+    if (!txt.match(re.subtitle)) return false;
+    var match = txt.match(re.subtitle);
+    return {
+        prefix: match[1],
+        text: match[2],
+        tag: 'subtitle'
     };
 }
 
@@ -146,6 +158,7 @@ function template() {
 }
 
 glob.sync('txt/*.txt').map(function(f) {
+// ['txt/DC_CODE_Title 3.txt'].map(function(f) {
     console.warn('loading ', f);
 
     var laws = [],
@@ -164,6 +177,7 @@ glob.sync('txt/*.txt').map(function(f) {
                 title(l) ||
                 chapter(l) ||
                 subchapter(l) ||
+                subtitle(l) ||
                 part(l) ||
                 empty(l) ||
                 subpart(l))) {
