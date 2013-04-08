@@ -10,7 +10,7 @@ glob.sync('json/*.json').map(function(f) {
     sections = sections.concat(j.filter(function(l) {
         return l.heading;
     }).map(function(l) {
-        return [l.heading.identifier, l.heading.catch_text];
+        return [l.heading.identifier.replace(/\.$/, ''), l.heading.catch_text];
     }));
     titles = titles.concat(j.filter(function(l) {
         return l.title;
