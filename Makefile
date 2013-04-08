@@ -1,15 +1,11 @@
-json: xml
+json: txt
 	mkdir -p json
 	node parse.js
 
-xml: html
-	mkdir -p xml
-	python xmlize.py
-
-html: docs/dc_code_unofficial_2012-12-11
-	mkdir -p html
-	textutil -convert html docs/dc_code_unofficial_2012-12-11/*.doc
-	mv docs/dc_code_unofficial_2012-12-11/*.html html
+txt: docs/dc_code_unofficial_2012-12-11
+	mkdir -p txt
+	textutil -convert txt docs/dc_code_unofficial_2012-12-11/*.doc
+	mv docs/dc_code_unofficial_2012-12-11/*.txt txt
 
 docs/dc_code_unofficial_2012-12-11: code.zip
 	unzip code.zip -d docs
