@@ -21,7 +21,7 @@ var re = {
     subpart: /^Subpart ([^\.]+)\.(.*)$/,
     heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
     full_heading: /^(((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?)))\.?(.*)$/,
-    section: /^\(([0-9a-zA-Z\-])+\)(.*)/,
+    section: /^\(([0-9a-zA-Z\-]+)\)(.*)/,
     historical: /HISTORICAL AND STATUTORY NOTES/,
     credits: /CREDIT\(S\)/,
     formerly: /Formerly cited as (.*)$/,
