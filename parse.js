@@ -1,5 +1,7 @@
 var glob = require('glob'),
     _ = require('lodash'),
+    ProgressBar = require('progress'),
+    pad = require('pad'),
     fs = require('fs');
 
 // District of Columbia Official Code 2001 Edition Currentness
@@ -19,6 +21,7 @@ var re = {
     part: /Part ([^\.]+)\.(.*)$/,
     subpart: /^Subpart ([^\.]+)\.(.*)$/,
     heading: /^((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?))\.?(.*)$/,
+    full_heading: /^(((§\s)?)([0-9]{1,2})([A-Z]?)-([0-9]{3,4})((((\.)([0-9]{2}))?)([a-z]?)))\.?(.*)$/,
     section: /^\(([0-9a-zA-Z\-])+\)(.*)/,
     historical: /HISTORICAL AND STATUTORY NOTES/,
     credits: /CREDIT\(S\)/,
@@ -42,13 +45,16 @@ var re = {
 function heading(txt) {
     if (!txt.match(re.heading)) return false;
     var match = txt.match(re.heading);
+    // use a separate regex here because of javascript's lack of
+    // nested groups
+    var fullmatch = txt.match(re.full_heading);
     return {
         tag: 'heading',
         title: match[3],
         chaptersection: match[5],
         // ugly hack because right now the regex does not return the
         // 'full match text'
-        identifier: txt.replace(match[12], ''),
+        identifier: fullmatch[1].replace(/^§?\s?/, '').trim(),
         catch_text: match[12].trim()
     };
 }
@@ -157,9 +163,12 @@ function template() {
     };
 }
 
-glob.sync('txt/*.txt').map(function(f) {
-// ['txt/DC_CODE_Title 3.txt'].map(function(f) {
-    console.warn('loading ', f);
+var files = glob.sync('txt/*.txt'),
+    bar = new ProgressBar('parsing [:bar] :percent :etas', {
+        total: files.length - 1
+    });
+
+files.map(function(f) {
 
     var laws = [],
         law = template(),
@@ -229,5 +238,7 @@ glob.sync('txt/*.txt').map(function(f) {
         i++;
     }
 
-    fs.writeFileSync(f.replace(/txt/g, 'json'), JSON.stringify(laws, null, 2));
+    var num = f.match(/([\dA-Z]+)\.txt/);
+    fs.writeFileSync('json/' + pad(4, num[1], '0') + '.json', JSON.stringify(laws, null, 2));
+    bar.tick();
 });
