@@ -1,6 +1,5 @@
 var glob = require('glob'),
     _ = require('lodash'),
-    ProgressBar = require('progress'),
     pad = require('pad'),
     fs = require('fs');
 
@@ -163,12 +162,10 @@ function template() {
     };
 }
 
-var files = glob.sync('txt/*.txt'),
-    bar = new ProgressBar('parsing [:bar] :percent :etas', {
-        total: files.length - 1
-    });
+var files = glob.sync('txt/*.txt');
 
 files.map(function(f) {
+// ['txt/DC_CODE_Title 2.txt'].map(function(f) {
 
     var laws = [],
         law = template(),
@@ -230,7 +227,7 @@ files.map(function(f) {
         if (end(l)) {
             law.historical = law.historical.trim();
             law.credits = law.credits.trim();
-            law.text = law.credits.trim();
+            law.text = law.text.trim();
             laws.push(law);
             law = template();
         }
@@ -240,5 +237,4 @@ files.map(function(f) {
 
     var num = f.match(/([\dA-Z]+)\.txt/);
     fs.writeFileSync('json/' + pad(4, num[1], '0') + '.json', JSON.stringify(laws, null, 2));
-    bar.tick();
 });
