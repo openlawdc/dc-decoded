@@ -34,8 +34,10 @@ Run:
 
 Early versions of the results of this code:
 
-* [XML (zipped)](https://dl.dropbox.com/u/68059/dccode/code.xml.zip)
-* [JSON (zipped)](https://dl.dropbox.com/u/68059/dccode/code.json.zip)
+The most useful output so far is [JSON sections (zipped)](https://dl.dropbox.com/u/68059/dccode/sections.zip) (21MB) -
+16,569 detected sections (detected with `parse.js`) output into JSON.
+These are fast to generate but downloading them lets you skip the Word Doc
+to Text to Parsed workflow.
 
 ## Requirements
 
