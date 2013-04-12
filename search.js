@@ -12,12 +12,15 @@ var stopwords = JSON.parse(fs.readFileSync('support/stopwords.json')),
 // a fast index of stopwords
 stopwords.forEach(function(s) { sidx[s] = true; });
 
+var sids = [];
+
 glob.sync('json/*.json').map(function(f) {
     var j = JSON.parse(fs.readFileSync(f));
     var sections = [];
     sections = sections.concat(j.filter(function(l) {
         return l.heading;
     }).map(function(l) {
+        sids.push(l.heading.identifier.replace(/\.$/, ''));
         return [
             l.heading.identifier.replace(/\.$/, ''),
             l.text + l.sections.map(function(s) {
@@ -44,6 +47,8 @@ glob.sync('json/*.json').map(function(f) {
     console.log('%d titles done', ++titles);
 });
 
+fs.writeFileSync('sids.json', JSON.stringify(sids.sort()));
+
 console.log('\ntop words\n---------');
 // word frequency, to identify possible stopwords
 var l = [];
@@ -57,13 +62,30 @@ console.log(l.slice(0, 30).map(function(w) {
     return w[1] + '\t' + w[0];
 }).join('\n'));
 
+fs.writeFileSync('wordfreq.csv',
+    'word,frequency\n' +
+    l.slice(0, 1000).map(function(w) {
+    return w[0] + ',' + w[1];
+}).join('\n'));
+
 console.log('\n');
 console.log(JSON.stringify(l.slice(0, 30).map(function(w) {
     return w[0];
 })));
 console.log('\n');
 
+var idxidx = {};
+for (var i = 0; i < sids.length; i++) {
+    idxidx[sids[i]] = i;
+}
+
 // word -> list of ids
 for (var a in alpha) {
+    var sidified = {};
+    for (var x in alpha[a]) {
+        alpha[a][x] = alpha[a][x].map(function(id) {
+            return idxidx[id];
+        });
+    }
     fs.writeFileSync('indexes/' + a + '.json', JSON.stringify(alpha[a]));
 }
