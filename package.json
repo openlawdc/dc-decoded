@@ -24,6 +24,7 @@
     "printf": "~0.1.1",
     "lodash": "~1.1.1",
     "pad": "0.0.4",
-    "progress": "~0.1.0"
+    "progress": "~0.1.0",
+    "underscore.string": "~2.3.1"
   }
 }

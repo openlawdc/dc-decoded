@@ -28,4 +28,4 @@ var index = {
     })
 };
 
-fs.writeFileSync('index.json', JSON.stringify(index, null, 2));
+fs.writeFileSync('index.json', JSON.stringify(index));
