@@ -2,11 +2,12 @@ var _s = require('underscore.string'),
     glob = require('glob'),
     fs = require('fs');
 
-var stopwords = JSON.parse(fs.readFileSync('support/stopwords.json')),
-    // .concat(JSON.parse(fs.readFileSync('support/stopwords_dc.json'))),
+var stopwords = JSON.parse(fs.readFileSync('support/stopwords.json'))
+    .concat(JSON.parse(fs.readFileSync('support/stopwords_dc.json'))),
     sidx = {},
     words = {},
     alpha = {},
+    MIN_LENGTH = 3,
     titles = 0;
 
 // a fast index of stopwords
@@ -20,7 +21,7 @@ glob.sync('json/*.json').map(function(f) {
     sections = sections.concat(j.filter(function(l) {
         return l.heading;
     }).map(function(l) {
-        sids.push(l.heading.identifier.replace(/\.$/, ''));
+        sids.push([l.heading.identifier.replace(/\.$/, ''), l.heading.catch_text]);
         return [
             l.heading.identifier.replace(/\.$/, ''),
             l.text + l.sections.map(function(s) {
@@ -32,7 +33,7 @@ glob.sync('json/*.json').map(function(f) {
         var w = _s.words(f[1]);
         w.forEach(function(word) {
             word = word.replace(/[^A-Za-z]/g, '').toLowerCase();
-            if (word.length > 3 && !(word in sidx)) {
+            if (word.length > MIN_LENGTH && !(word in sidx)) {
                 if (typeof words[word] !== 'object') words[word] = [];
                 if (words[word].indexOf(id) === -1) {
                     words[word].push(id);
