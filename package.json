@@ -1,0 +1,29 @@
+{
+  "name": "dc-decoded",
+  "version": "0.0.0",
+  "description": "a parser for the unofficial dc code",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/openlawdc/dc-decoded.git"
+  },
+  "keywords": [
+    "law",
+    "code",
+    "parser",
+    "dc",
+    "code"
+  ],
+  "author": "Tom MacWright",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/openlawdc/dc-decoded/issues"
+  },
+  "dependencies": {
+    "minimist": "0.0.5",
+    "tokenizer": "~1.1.2"
+  }
+}
