@@ -24,6 +24,9 @@
   },
   "dependencies": {
     "minimist": "0.0.5",
-    "tokenizer": "~1.1.2"
+    "split": "~0.2.10",
+    "through": "~2.3.4",
+    "concat-stream": "~1.0.1",
+    "JSONStream": "~0.7.1"
   }
 }

@@ -1,37 +1,55 @@
-var Tokenizer = require('tokenizer'),
-    fs = require('fs'),
-    t = Tokenizer(function() {
-        // console.log(arguments);
-    });
+var fs = require('fs'),
+    tree = require('./tree'),
+    toc = require('./toc'),
+    JSONStream = require('JSONStream'),
+    split = require('split');
 
-t.addRule(/^History$/, 'history');
-
-// Organizational headings
-t.addRule(/^\s*Sec\. (\d+)\.\s+$/, 'section');
-t.addRule(/^\s*ARTICLE\s+(\w+)$/, 'article');
-t.addRule(/^\s*CHAPTER\s+(\d+)$/, 'chapter');
-t.addRule(/^\s*TITLE\s+(\d+)$/, 'title');
-
-// text of the law
-t.addRule(/^([\r|\n]*)$/, 'space');
-t.addRule(/^(.*)$/, 'anything');
+var matcher = Matcher([
+    ['section', /^\s*Sec\. (\d+)\.\s+(.*)$/],
+    ['section', /^\s*(\d+)\-(\d+)\s*$/],
+    ['article', /^\s*ARTICLE\s+(\w+)$/],
+    ['amendment', /^\s*AMENDMENT/],
+    ['history', /^History$/],
+    ['annotations', /^Annotations$/],
+    ['chapter', /^\s*CHAPTER\s+(\w+)$/],
+    ['subchapter', /^\s*SUBCHAPTER\s+(\w+)$/],
+    ['title', /^\s*TITLE\s+(\w+)$/],
+    ['part', /^\s*PART\s+(\w+)$/]
+]);
 
 module.exports = function parse(file) {
     var stream = fs.createReadStream(file, { encoding: 'utf8' });
 
-    stream.pipe(t).on('token', handleToken).on('end', function() {
-        console.log('done');
-    }).on('error', function() {
-        console.log(arguments);
-    });
-    //
-    // stream.on('data', function(chunk) {
-    //     console.log(chunk.toString());
-    // });
+    var classifiedStream = stream
+        .pipe(split(classify));
 
-    function handleToken(token, type) {
-        if (type !== 'space' && type !== 'anything') {
-            console.log(token.toString());
-        }
-    }
+    var treeStream = classifiedStream.pipe(tree);
+
+    treeStream.pipe(JSONStream.stringify())
+        .pipe(fs.createWriteStream('all.json'));
+
+    treeStream.pipe(toc())
+        .pipe(JSONStream.stringify())
+        .pipe(fs.createWriteStream('toc.json'));
 };
+
+function classify(txt) {
+    return matcher(txt);
+}
+
+function Matcher(res) {
+    return function(txt) {
+        var match;
+        for (var i = 0; i < res.length; i++) {
+            match = txt.match(res[i][1]);
+            if (match) return {
+                type: res[i][0],
+                match: match,
+                text: txt
+            };
+        }
+        return {
+            text: txt
+        };
+    };
+}

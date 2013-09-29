@@ -9,3 +9,6 @@ raw/dc_code_unofficial_sept_2013.txt: raw
 
 raw:
 	mkdir -p raw
+
+run:
+	node index.js raw/dc_code_unofficial_sept_2013.utf8.txt
